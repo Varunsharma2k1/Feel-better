@@ -5,8 +5,8 @@ import { colors } from '../theme/colors';
 
 const { width, height } = Dimensions.get('window');
 const TARGET_SCORE = 10;
-// 0: 💋 (Target), 1: 💖 (Avoid), 2: 🧸 (Neutral), 3: 🌸 (Neutral), 4: 🦋 (Neutral)
-const EMOJIS = ['💋', '💖', '🧸', '🌸', '🦋'];
+// We add more kisses to the array to make them drop more frequently (3 out of 7 chance)
+const EMOJIS = ['💋', '💋', '💋', '💖', '🧸', '🌸', '🦋'];
 
 const MESSAGES = [
   "Sending you a million virtual hugs! 🧸",
@@ -92,9 +92,9 @@ export default function GameScreen({ navigation }) {
       const currentScore = scoreRef.current;
       const type = Math.floor(Math.random() * EMOJIS.length);
       
-      // Speed up calculations: slightly faster fall but not too overwhelming
-      const baseDuration = Math.max(2000, 3500 - (currentScore * 100));
-      const speed = Math.random() * 1000 + baseDuration;
+      // Speed up calculations: faster fall
+      const baseDuration = Math.max(1500, 2800 - (currentScore * 100));
+      const speed = Math.random() * 800 + baseDuration;
       
       const newItem = {
         id: itemIdCounter.current++,
@@ -105,18 +105,19 @@ export default function GameScreen({ navigation }) {
       
       setItems(prev => [...prev, newItem]);
 
-      // Calculate next spawn interval (slower spawn rate so it's not too crowded)
-      const baseInterval = Math.max(800, 1200 - (currentScore * 30));
+      // Calculate next spawn interval (spawns faster now)
+      const baseInterval = Math.max(500, 800 - (currentScore * 25));
       timerRef.current = setTimeout(spawnItem, baseInterval);
     };
 
-    const timerRef = { current: setTimeout(spawnItem, 1000) };
+    // Initial spawn timer
+    const timerRef = { current: setTimeout(spawnItem, 600) };
 
     return () => clearTimeout(timerRef.current);
   }, [gameWon, gameOver]);
 
   const handleCatch = (id, type) => {
-    if (type === 0) {
+    if (EMOJIS[type] === '💋') {
       // Caught a kiss!
       setScore(prev => {
         const newScore = prev + 1;
@@ -125,19 +126,16 @@ export default function GameScreen({ navigation }) {
         }
         return newScore;
       });
-    } else if (type === 1) {
-      // Caught a heart - oh no!
-      setGameOverReason("Oops! You accidentally caught a heart instead of a kiss!");
-      setGameOver(true);
     }
+    // Touching any other emoji simply makes it disappear with no penalty
     
     // Remove caught item
     setItems(prev => prev.filter(item => item.id !== id));
   };
 
   const handleMiss = (id, type) => {
-    // If kiss (0) is missed, GAME OVER
-    if (type === 0) {
+    // If kiss is missed, GAME OVER
+    if (EMOJIS[type] === '💋') {
       setGameOverReason("Oh no! A precious kiss fell away!");
       setGameOver(true);
     }
@@ -237,6 +235,8 @@ export default function GameScreen({ navigation }) {
           <Text style={styles.scoreText}>Love Meter: {score} / {TARGET_SCORE}</Text>
         </View>
       </View>
+
+      <Text style={styles.instructionText}>Grab all the 💋 to win! Don't let them fall!</Text>
 
       <View style={styles.gameArea}>
         {items.map(item => (
@@ -356,6 +356,14 @@ const styles = StyleSheet.create({
     color: colors.card,
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  instructionText: {
+    textAlign: 'center',
+    color: colors.primary,
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginTop: 10,
+    marginBottom: 5,
   },
   gameArea: {
     flex: 1,
