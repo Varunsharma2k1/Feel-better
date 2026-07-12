@@ -26,7 +26,7 @@ const FallingItem = ({ id, xPos, onCatch, onMiss, speed, type }) => {
 
   useEffect(() => {
     Animated.timing(fallAnim, {
-      toValue: height + 50,
+      toValue: height + 150,  // Falls well past the visible screen before triggering miss
       duration: speed,
       easing: Easing.linear,
       useNativeDriver: true,
@@ -92,9 +92,9 @@ export default function GameScreen({ navigation }) {
       const currentScore = scoreRef.current;
       const type = Math.floor(Math.random() * EMOJIS.length);
       
-      // Speed up calculations: faster fall
-      const baseDuration = Math.max(1500, 2800 - (currentScore * 100));
-      const speed = Math.random() * 800 + baseDuration;
+      // Keep fall speed steady so it's easy to click on web
+      const baseDuration = 3500;
+      const speed = Math.random() * 1000 + baseDuration;
       
       const newItem = {
         id: itemIdCounter.current++,
@@ -105,13 +105,13 @@ export default function GameScreen({ navigation }) {
       
       setItems(prev => [...prev, newItem]);
 
-      // Calculate next spawn interval (spawns faster now)
-      const baseInterval = Math.max(500, 800 - (currentScore * 25));
+      // Keep spawn rate fairly steady, only slightly faster at the end
+      const baseInterval = Math.max(800, 1200 - (currentScore * 20));
       timerRef.current = setTimeout(spawnItem, baseInterval);
     };
 
     // Initial spawn timer
-    const timerRef = { current: setTimeout(spawnItem, 600) };
+    const timerRef = { current: setTimeout(spawnItem, 800) };
 
     return () => clearTimeout(timerRef.current);
   }, [gameWon, gameOver]);
